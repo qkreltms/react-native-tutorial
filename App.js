@@ -6,7 +6,8 @@
  * @flow
  */
 
-import React, { Fragment } from 'react';
+//  TODO: 입력시 스크롤뷰 밀리지 않도록 설정하기
+import React, { Fragment, useState } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -14,50 +15,97 @@ import {
   View,
   Text,
   StatusBar,
+  TextInput,
+  Button,
+  KeyboardAvoidingView
 } from 'react-native';
 
-import {
-  Colors,
-} from 'react-native/Libraries/NewAppScreen';
-
 const App = () => {
+  const [text, setText] = useState("");
+  // Todo: { id: 0, text: "", completed: false }
+  const [todoList, setTodoList] = useState([{ id: 0, text: "", completed: false }]);
+
+  const updateTodo = (modifiedTodo) => {
+    const newTodoList = todoList.map(todo => {
+      if (todo.id === modifiedTodo.id) {
+        return modifiedTodo;
+      } else {
+        return todo;
+      }
+    })
+
+    return newTodoList;
+  }
+
+  const deleteTodo = (targetTodo) => {
+    const newTodoList = todoList.filter(todo => {
+      if (todo.id !== targetTodo.id) {
+        return todo;
+      }
+    })
+
+    return newTodoList;
+  }
+
+  const addTodo = (newTodo) => {
+    const newTodoList = todoList.concat(newTodo);
+
+    return newTodoList;
+  }
+
+  const onTextSubmitHandler = (event) => {
+    const eventTemp = Object.assign({}, event);
+    const newTodo = { id: Math.floor(Math.random() * 10000), text: eventTemp.nativeEvent.text, completed: false }
+    setTodoList(addTodo(newTodo));
+    setText("");
+  }
+
+  const onTodoDeleteClickHandler = (todo) => (event) => {
+    setTodoList(deleteTodo(todo));
+  }
+
+  const onTodoCompleteClickHandler = (todo) => (event) => {
+    const newTodo = Object.assign({}, { ...todo, completed: !todo.completed });
+    setTodoList(updateTodo(newTodo));
+  }
+
   return (
     <Fragment>
       <StatusBar barStyle="dark-content" />
       <SafeAreaView>
         <ScrollView
           contentInsetAdjustmentBehavior="automatic"
-          style={styles.scrollView}>
-          {global.HermesInternal == null ? null : (
-            <View style={styles.engine}>
-              <Text style={styles.footer}>Engine: Hermes</Text>
-            </View>
-          )}
-          <View style={styles.body}>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>testb23 Step One</Text>
-              <Text style={styles.sectionDescription}>
-                Edit <Text style={styles.highlight}>App.js</Text> to change this
-                screen and then come back to see your edits.
+          style={styles.scrollView}
+          bounces
+        >
+          {todoList.map((todo, index) => (
+            <View key={todo.id}>
+              <Text style={todo.completed ? styles.completed : ""}>
+                {`${index + 1}. ${todo.text}`}
               </Text>
+              <Button
+                title="삭제"
+                onPress={onTodoDeleteClickHandler(todo)}
+              />
+              <Button
+                title={todo.completed ? `완료` : "취소"}
+                onPress={onTodoCompleteClickHandler(todo)}
+              />
             </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>See Your Changes</Text>
-              <Text style={styles.sectionDescription}>
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Debug</Text>
-              <Text style={styles.sectionDescription}>
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Learn More</Text>
-              <Text style={styles.sectionDescription}>
-                Read the docs to discover what to do next:
-              </Text>
-            </View>
-          </View>
+          ))}
+
+          <TextInput
+            style={styles.textInput}
+            value={text}
+            onChangeText={setText}
+            autoFocus
+            blurOnSubmit
+            clearTextOnFocus
+            keyboardType={"default"}
+            maxLength={100}
+            placeholder={"오늘 할 일을 입력하세요."}
+            onSubmitEditing={onTextSubmitHandler}
+          />
         </ScrollView>
       </SafeAreaView>
     </Fragment>
@@ -66,41 +114,15 @@ const App = () => {
 
 const styles = StyleSheet.create({
   scrollView: {
-    backgroundColor: Colors.lighter,
+    backgroundColor: `aquamarine`,
+    height: "100%"
   },
-  engine: {
-    position: 'absolute',
-    right: 0,
+  textInput: {
+    borderColor: 'gray', borderWidth: 1, backgroundColor: `white`
   },
-  body: {
-    backgroundColor: Colors.white,
-  },
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: Colors.black,
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-    color: Colors.dark,
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-  footer: {
-    color: Colors.dark,
-    fontSize: 12,
-    fontWeight: '600',
-    padding: 4,
-    paddingRight: 12,
-    textAlign: 'right',
-  },
+  completed: {
+    textDecorationLine: "line-through"
+  }
 });
 
 export default App;
